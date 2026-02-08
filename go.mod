@@ -29,4 +29,6 @@ require (
 	golang.org/x/crypto v0.18.0
 	github.com/google/uuid v1.5.0
         github.com/MeowTux/drift-detector
+	github.com/MeowTux/drift-detector/cmd
+        github.com/MeowTux/drift-detector/internal/detectors
 )
