@@ -1,0 +1,48 @@
+# Example Drift Detector Configuration
+# Copy this to config/config.yaml and customize
+
+terraform:
+  state_backend: "local"
+  state_path: "./examples/terraform/terraform.tfstate"
+
+providers:
+  aws:
+    enabled: true
+    regions:
+      - "us-east-1"
+      - "us-west-2"
+  
+  gcp:
+    enabled: false
+    project_id: "my-project-id"
+  
+  azure:
+    enabled: false
+    subscription_id: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+
+detection:
+  interval: "5m"
+  resources_to_monitor:
+    - "aws_instance"
+    - "aws_s3_bucket"
+    - "aws_security_group"
+  min_severity: "medium"
+
+notifications:
+  slack:
+    enabled: true
+    webhook_url: "${SLACK_WEBHOOK_URL}"
+  
+  email:
+    enabled: false
+    smtp_host: "smtp.gmail.com"
+    smtp_port: 587
+    username: "${EMAIL_USERNAME}"
+    password: "${EMAIL_PASSWORD}"
+    from: "drift-detector@example.com"
+    to:
+      - "ops-team@example.com"
+  
+  webhook:
+    enabled: false
+    url: "${WEBHOOK_URL}"

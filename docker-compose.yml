@@ -1,0 +1,67 @@
+version: '3.8'
+
+services:
+  drift-detector:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: drift-detector
+    volumes:
+      - ./config:/app/config:ro
+      - ./examples/terraform:/terraform:ro
+    environment:
+      # AWS Credentials
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_REGION=${AWS_REGION:-us-east-1}
+      
+      # GCP Credentials
+      - GOOGLE_APPLICATION_CREDENTIALS=${GOOGLE_APPLICATION_CREDENTIALS}
+      - GCP_PROJECT_ID=${GCP_PROJECT_ID}
+      
+      # Azure Credentials
+      - AZURE_CLIENT_ID=${AZURE_CLIENT_ID}
+      - AZURE_CLIENT_SECRET=${AZURE_CLIENT_SECRET}
+      - AZURE_TENANT_ID=${AZURE_TENANT_ID}
+      - AZURE_SUBSCRIPTION_ID=${AZURE_SUBSCRIPTION_ID}
+      
+      # Notifications
+      - SLACK_WEBHOOK_URL=${SLACK_WEBHOOK_URL}
+      - EMAIL_USERNAME=${EMAIL_USERNAME}
+      - EMAIL_PASSWORD=${EMAIL_PASSWORD}
+      - WEBHOOK_URL=${WEBHOOK_URL}
+      
+      # Logging
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+    
+    command: detect --watch --interval 5m
+    
+    restart: unless-stopped
+    
+    # Security
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+  # Optional: Run once and exit
+  drift-detector-oneshot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: drift-detector-oneshot
+    volumes:
+      - ./config:/app/config:ro
+    environment:
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - SLACK_WEBHOOK_URL=${SLACK_WEBHOOK_URL}
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+    command: detect
+    profiles:
+      - oneshot
+
+networks:
+  default:
+    name: drift-detector-network
