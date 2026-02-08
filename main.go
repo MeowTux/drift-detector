@@ -60,16 +60,16 @@ func printBanner() {
 	banner := `
 ╔═══════════════════════════════════════════════════════╗
 ║                                                       ║
-║   ____  ____  ____  _____ _____                      ║
-║  |  _ \|  _ \|_ _||  ___|_   _|                     ║
-║  | | | | |_) || | | |_    | |                       ║
-║  | |_| |  _ < | | |  _|   | |                       ║
-║  |____/|_| \_\___|_|      |_|                       ║
+║   ____    ____   ____   _____    _____                ║
+║  |  _ \  |  _ \  |_ _| |   ___| |_   _|               ║
+║  | | | | | | |_)  | |  |  |       |_|                 ║
+║  | |_| | |  |  <  | |  |   _|     | |                 ║
+║  |____/  |_| \_| \___/ | _|       |_|                 ║
 ║                                                       ║
-║              DETECTOR v%s                        ║
+║              DETECTOR v%s                             ║
 ║                                                       ║
-║  Infrastructure Drift Detection for Terraform        ║
-║  Author: MeowTux | License: GPL-3.0                  ║
+║  Infrastructure Drift Detection for Terraform         ║
+║  Author: MeowTux | License: GPL-Apache.2              ║
 ║                                                       ║
 ╚═══════════════════════════════════════════════════════╝
 `
