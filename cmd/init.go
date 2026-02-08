@@ -34,7 +34,7 @@ func runInit(cmd *cobra.Command, args []string) error {
 		color.Yellow("⚠  Configuration file already exists at %s", configPath)
 		fmt.Print("Overwrite? (y/N): ")
 		var response string
-		fmt.Scanln(&response)
+		_, _ = fmt.Scanln(&response)
 		if response != "y" && response != "Y" {
 			color.Cyan("Initialization cancelled")
 			return nil
