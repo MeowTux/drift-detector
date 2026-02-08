@@ -8,12 +8,12 @@ on:
     branches: [ main ]
 
 env:
-  GO_VERSION: '1.21'
+  GO_VERSION: '1.23'
 
 jobs:
-  # Test (TANPA LINTER)
+  # Test with linting
   test:
-    name: Test
+    name: Test & Lint
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -25,9 +25,11 @@ jobs:
           go-version: ${{ env.GO_VERSION }}
 
       - name: Cache Go modules
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
-          path: ~/go/pkg/mod
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-
@@ -35,13 +37,21 @@ jobs:
       - name: Download dependencies
         run: go mod download
 
+      - name: Run golangci-lint
+        uses: golangci/golangci-lint-action@v4
+        with:
+          version: latest
+          args: --timeout=5m
+
       - name: Run tests
         run: go test -v -race -coverprofile=coverage.txt -covermode=atomic ./...
 
-      - name: Upload coverage
-        uses: codecov/codecov-action@v3
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
         with:
           files: ./coverage.txt
+          flags: unittests
+          fail_ci_if_error: false
 
   # Build for multiple platforms
   build:
@@ -79,18 +89,22 @@ jobs:
           if [ "${{ matrix.goos }}" = "windows" ]; then
             BINARY_NAME="${BINARY_NAME}.exe"
           fi
-          go build -ldflags="-w -s" -o ${BINARY_NAME} .
+          go build -ldflags="-w -s -X main.Version=${{ github.ref_name }}" -o ${BINARY_NAME} .
+          echo "Built: ${BINARY_NAME}"
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: binaries
+          name: binaries-${{ matrix.goos }}-${{ matrix.goarch }}
           path: drift-detector-*
+          retention-days: 5
 
-  # Security scan
+  # Security scan with Gosec
   security:
     name: Security Scan
     runs-on: ubuntu-latest
+    needs: test
+    continue-on-error: true
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -99,18 +113,24 @@ jobs:
         uses: securego/gosec@master
         with:
           args: '-no-fail -fmt sarif -out results.sarif ./...'
+        continue-on-error: true
 
-      - name: Upload SARIF file
-        uses: github/codeql-action/upload-sarif@v3  # <--- INI YG BIKIN ERROR KEMAREN (Dah diganti v3)
+      - name: Upload SARIF to GitHub Security
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: results.sarif
+        continue-on-error: true
 
   # Docker build and push
   docker:
-    name: Docker
+    name: Docker Build & Push
     runs-on: ubuntu-latest
     needs: test
-    if: github.event_name != 'pull_request'
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || startsWith(github.ref, 'refs/tags/v'))
+    permissions:
+      contents: read
+      packages: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -119,6 +139,7 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Log in to Docker Hub
+        if: github.event_name == 'push'
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
@@ -128,19 +149,21 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: meowtux/drift-detector
+          images: |
+            meowtux/drift-detector
           tags: |
             type=ref,event=branch
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
-            type=sha
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
 
-      - name: Build and push
+      - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
           context: .
           platforms: linux/amd64,linux/arm64
-          push: true
+          push: ${{ github.event_name == 'push' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
@@ -148,25 +171,33 @@ jobs:
 
   # Release (only on tags)
   release:
-    name: Release
+    name: Create Release
     runs-on: ubuntu-latest
     needs: [test, build]
     if: startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Download artifacts
-        uses: actions/download-artifact@v3
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
         with:
-          name: binaries
+          path: ./artifacts
+
+      - name: Prepare release files
+        run: |
+          mkdir -p release
+          find artifacts -type f -name "drift-detector-*" -exec cp {} release/ \;
+          ls -lah release/
 
       - name: Create Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
-          files: drift-detector-*
+          files: release/drift-detector-*
           draft: false
-          prerelease: false
+          prerelease: ${{ contains(github.ref, 'alpha') || contains(github.ref, 'beta') || contains(github.ref, 'rc') }}
+          generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
