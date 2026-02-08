@@ -1,6 +1,6 @@
 # 🔍 Drift Detector
 
-[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![License: Apache2](https://img.shields.io/badge/License-apache2-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
 [![Go Version](https://img.shields.io/badge/Go-1.21+-00ADD8?logo=go)](https://go.dev/)
 [![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20Windows%20%7C%20macOS%20%7C%20Android-lightgrey)]()
 
@@ -280,7 +280,7 @@ Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) for de
 
 ## 📄 License
 
-This project is licensed under the GNU General Public License v3.0 - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the Apache2 LICENSE - see the [LICENSE](LICENSE) file for details.
 
 ## 🙏 Acknowledgments
 
@@ -292,7 +292,7 @@ This project is licensed under the GNU General Public License v3.0 - see the [LI
 
 - 🐛 [Report Issues](https://github.com/MeowTux/drift-detector/issues)
 - 💬 [Discussions](https://github.com/MeowTux/drift-detector/discussions)
-- 📧 Email: support@meowtux.dev
+- 📧 Email: i don't have any comersial email😂
 
 ## 🗺️ Roadmap
 
